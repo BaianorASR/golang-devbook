@@ -19,6 +19,12 @@ var usersRoute = []Route{
 		Authrequired: false,
 	},
 	{
+		URI:          "/users/search",
+		Method:       http.MethodGet,
+		HandlerFunc:  controllers.GetUserByNameOrNickname,
+		Authrequired: false,
+	},
+	{
 		URI:          "/users/{user_id}",
 		Method:       http.MethodGet,
 		HandlerFunc:  controllers.GetUserByID,

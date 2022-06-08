@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"api/src/controllers"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -21,6 +22,8 @@ func ConfigureRoutes(r *mux.Router) *mux.Router {
 	for _, route := range routes {
 		r.HandleFunc(route.URI, route.HandlerFunc).Methods(route.Method)
 	}
+
+	r.Path("users").Queries("user", "{user}").Methods(http.MethodGet).HandlerFunc(controllers.GetUserByNameOrNickname)
 
 	return r
 }
