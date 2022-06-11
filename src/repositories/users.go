@@ -98,13 +98,11 @@ func (ur *userRepository) GetUser(name string) ([]models.User, error) {
 }
 
 func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
-	stmt, err := ur.db.Prepare("SELECT * FROM users WHERE id = ?")
+	stmt, err := ur.db.Prepare("SELECT id, name, nickname, email, created_at FROM users WHERE id = ?")
 	if err != nil {
 		return models.User{}, err
 	}
 	defer stmt.Close()
-
-	var user models.User
 
 	row, err := stmt.Query(id)
 	if err != nil {
@@ -112,7 +110,8 @@ func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
 	}
 	defer row.Close()
 
-	for row.Next() {
+	var user models.User
+	if row.Next() {
 		if err := row.Scan(&user.ID, &user.Name, &user.Nickname, &user.Email, &user.CreatedAt); err != nil {
 			return models.User{}, err
 		}
