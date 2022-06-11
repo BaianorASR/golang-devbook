@@ -39,6 +39,32 @@ func (ur *userRepository) CreateUser(user models.User) (uint64, error) {
 	return uint64(ID), nil
 }
 
+func (ur *userRepository) GetAllUsers() ([]models.User, error) {
+	stmt, err := ur.db.Prepare("SELECT * FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+
+		if err := rows.Scan(&user.ID, &user.Name, &user.Nickname, &user.Email, &user.Password, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 // GetUser gets a user by name or nickname from the database.
 func (ur *userRepository) GetUser(name string) ([]models.User, error) {
 	nameOrNickname := fmt.Sprintf("%%%s%%", name)
@@ -69,4 +95,28 @@ func (ur *userRepository) GetUser(name string) ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
+	stmt, err := ur.db.Prepare("SELECT * FROM users WHERE id = ?")
+	if err != nil {
+		return models.User{}, err
+	}
+	defer stmt.Close()
+
+	var user models.User
+
+	row, err := stmt.Query(id)
+	if err != nil {
+		return models.User{}, err
+	}
+	defer row.Close()
+
+	for row.Next() {
+		if err := row.Scan(&user.ID, &user.Name, &user.Nickname, &user.Email, &user.CreatedAt); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
 }
