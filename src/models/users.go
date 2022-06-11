@@ -17,15 +17,15 @@ type User struct {
 }
 
 // PrepareUser is a function that prepares user and validate.
-func (u User) PrepareUser() error {
+func (u User) PrepareUser(stage string) error {
 	u.formatUser()
-	if err := u.validateUser(); err != nil {
+	if err := u.validateUser(stage); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (user *User) validateUser() error {
+func (user *User) validateUser(stage string) error {
 	if user.Name == "" {
 		return errors.New("name is required")
 	}
@@ -35,7 +35,7 @@ func (user *User) validateUser() error {
 	if user.Email == "" {
 		return errors.New("email is required")
 	}
-	if user.Password == "" {
+	if stage == "signUp" && user.Password == "" {
 		return errors.New("password is required")
 	}
 	return nil

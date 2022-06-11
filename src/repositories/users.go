@@ -39,6 +39,7 @@ func (ur *userRepository) CreateUser(user models.User) (uint64, error) {
 	return uint64(ID), nil
 }
 
+// GetAllUsers gets all users from the database.
 func (ur *userRepository) GetAllUsers() ([]models.User, error) {
 	stmt, err := ur.db.Prepare("SELECT * FROM users")
 	if err != nil {
@@ -97,6 +98,7 @@ func (ur *userRepository) GetUser(name string) ([]models.User, error) {
 	return users, nil
 }
 
+// GetUserByID gets a user by ID from the database.
 func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
 	stmt, err := ur.db.Prepare("SELECT id, name, nickname, email, created_at FROM users WHERE id = ?")
 	if err != nil {
@@ -118,4 +120,22 @@ func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+// UpdateUser updates a user in the database.
+func (ur *userRepository) UpdateUser(ID uint64, user models.User) error {
+	stmt, err := ur.db.Prepare(
+		"UPDATE users SET name = ?, nickname = ?, email = ? WHERE id = ?",
+	)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.Name, user.Nickname, user.Email, ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
