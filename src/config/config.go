@@ -10,10 +10,15 @@ import (
 )
 
 var (
+	// StringDatabaseConection is a string that contains the database conection.
 	StringDatabaseConection = ""
-	Port                    = 5000
+	// Port is the port of the server.
+	Port = 5000
+	// SecretKey is a secret key that is used to sign the JWT.
+	SecretKey = ""
 )
 
+// Init is a function that initializes the config.
 func Init() {
 	var err error
 	if err = godotenv.Load(); err != nil {
@@ -24,6 +29,8 @@ func Init() {
 	if err != nil {
 		Port = 5000
 	}
+
+	SecretKey = os.Getenv("SECRET_KEY")
 
 	StringDatabaseConection = fmt.Sprintf("")
 

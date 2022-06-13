@@ -6,18 +6,18 @@ import (
 	"fmt"
 )
 
-// UserRepository is a struct that contains the user's information.
-type userRepository struct {
+// USERRepository is a struct that contains the user's information.
+type USERRepository struct {
 	db *sql.DB
 }
 
 // UserRepository creates a new user repository.
-func UserRepository(db *sql.DB) *userRepository {
-	return &userRepository{db}
+func UserRepository(db *sql.DB) *USERRepository {
+	return &USERRepository{db}
 }
 
 // CreateUser creates a new user in the database.
-func (ur *userRepository) CreateUser(user models.User) (uint64, error) {
+func (ur *USERRepository) CreateUser(user models.User) (uint64, error) {
 	stmt, err := ur.db.Prepare(
 		"INSERT INTO users (name, nickname, email, password) VALUES (?, ?, ?, ?)",
 	)
@@ -40,8 +40,8 @@ func (ur *userRepository) CreateUser(user models.User) (uint64, error) {
 }
 
 // GetAllUsers gets all users from the database.
-func (ur *userRepository) GetAllUsers() ([]models.User, error) {
-	stmt, err := ur.db.Prepare("SELECT * FROM users")
+func (ur *USERRepository) GetAllUsers() ([]models.User, error) {
+	stmt, err := ur.db.Prepare("SELECT id, name, nickname, email, created_at FROM users")
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (ur *userRepository) GetAllUsers() ([]models.User, error) {
 	for rows.Next() {
 		var user models.User
 
-		if err := rows.Scan(&user.ID, &user.Name, &user.Nickname, &user.Email, &user.Password, &user.CreatedAt); err != nil {
+		if err := rows.Scan(&user.ID, &user.Name, &user.Nickname, &user.Email, &user.CreatedAt); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -67,7 +67,7 @@ func (ur *userRepository) GetAllUsers() ([]models.User, error) {
 }
 
 // GetUser gets a user by name or nickname from the database.
-func (ur *userRepository) GetUser(name string) ([]models.User, error) {
+func (ur *USERRepository) GetUser(name string) ([]models.User, error) {
 	nameOrNickname := fmt.Sprintf("%%%s%%", name)
 
 	stmt, err := ur.db.Prepare(
@@ -99,7 +99,7 @@ func (ur *userRepository) GetUser(name string) ([]models.User, error) {
 }
 
 // GetUserByID gets a user by ID from the database.
-func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
+func (ur USERRepository) GetUserByID(id uint64) (models.User, error) {
 	stmt, err := ur.db.Prepare("SELECT id, name, nickname, email, created_at FROM users WHERE id = ?")
 	if err != nil {
 		return models.User{}, err
@@ -123,7 +123,7 @@ func (ur userRepository) GetUserByID(id uint64) (models.User, error) {
 }
 
 // UpdateUser updates a user in the database.
-func (ur *userRepository) UpdateUser(ID uint64, user models.User) error {
+func (ur *USERRepository) UpdateUser(ID uint64, user models.User) error {
 	stmt, err := ur.db.Prepare(
 		"UPDATE users SET name = ?, nickname = ?, email = ? WHERE id = ?",
 	)
@@ -138,4 +138,44 @@ func (ur *userRepository) UpdateUser(ID uint64, user models.User) error {
 	}
 
 	return nil
+}
+
+// DeleteUser deletes a user from the database.
+func (ur *USERRepository) DeleteUser(ID uint64) error {
+	stmt, err := ur.db.Prepare("DELETE FROM users WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetUserByEmail gets a user by email from the database.
+func (ur *USERRepository) GetUserByEmail(email string) (models.User, error) {
+	stmt, err := ur.db.Prepare("SELECT  email, password FROM users WHERE email = ?")
+	if err != nil {
+		return models.User{}, err
+	}
+	defer stmt.Close()
+
+	row, err := stmt.Query(email)
+	if err != nil {
+		return models.User{}, err
+	}
+	defer row.Close()
+
+	var user models.User
+	if row.Next() {
+		if err := row.Scan(&user.Email, &user.Password); err != nil {
+			return models.User{}, err
+		}
+	}
+
+	return user, nil
 }

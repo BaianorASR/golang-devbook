@@ -22,8 +22,14 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user models.User
+
 	if err = json.Unmarshal(bodyRequest, &user); err != nil {
 		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if user, err = user.FormatUser("signUp"); err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, err)
 		return
 	}
 
@@ -45,6 +51,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
+	// user.Password = ""
 
 	response.JSON(w, http.StatusCreated, user)
 }
@@ -118,6 +125,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if user, err = user.FormatUser("update"); err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
 	if err = user.PrepareUser("update"); err != nil {
 		response.Error(w, http.StatusUnprocessableEntity, err)
 		return
@@ -142,5 +154,27 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser deletes a user.
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	param := mux.Vars(r)
 
+	paramID, err := strconv.ParseUint(param["user_id"], 10, 64)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	db, err := database.Connect()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	defer db.Close()
+
+	repository := repositories.UserRepository(db)
+	err = repository.DeleteUser(paramID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
